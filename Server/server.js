@@ -18,7 +18,7 @@ app.get('/', (req, res) => {
     res.send('Server is Live')
 })
 
-app.use('/api/user',userRouter)
+app.use('/api/user', userRouter)
 app.listen(PORT, () => {
     console.log(`Server is listening on port ${PORT}`);
 })
