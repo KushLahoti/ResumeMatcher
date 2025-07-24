@@ -16,9 +16,9 @@ export const protectRoute = async (req, res, next) => {
             user = await User.findById(decoded.userId)
         }
         if (user) {
-            token = await RefreshToken.findOne(decoded.userId)
+            token = await RefreshToken.findOne({ userId: decoded.userId })
         }
-        if (!decoded || !user || !token || token !== refreshToken) {
+        if (!decoded || !user || !token || token.refreshToken !== refreshToken) {
             res.clearCookie("refreshToken")
             res.clearCookie("accessToken")
             return res.status(401).json({ success: false, messaage: "Unauthorized Access" })
@@ -29,7 +29,7 @@ export const protectRoute = async (req, res, next) => {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-                maxAge: max_age_access_token
+                maxAge: parseInt(process.env.MAX_AGE_ACCESS_TOKEN)
             })
         }
         req.user = user;

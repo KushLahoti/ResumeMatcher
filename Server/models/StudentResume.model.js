@@ -8,7 +8,7 @@ const studentResumeSchema = new mongoose.Schema({
     },
     Resume: {
         type: String,
-        reuired: true
+        required: true
     }
 }, {
     timestamps: true
