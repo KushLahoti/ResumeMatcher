@@ -24,7 +24,7 @@ export const handleUploadResume = async (req, res) => {
 
         const savedResume = await StudentResume.create({
             StudentId: studentId,
-            Resume: fileOnCloudinary.url
+            Resume: fileOnCloudinary.secure_url
         })
 
         return res.status(201).json({

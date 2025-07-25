@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
+import "dotenv/config";
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -21,7 +22,9 @@ export const uploadResumeOnCloudinary = async (localResumeFilePath) => {
         return response;
     } catch (error) {
         console.error("Cloudinary upload error:", error);
-        fs.unlinkSync(localResumeFilePath) //Remove the locally saved temporary file as the upload operation is failed
+        fs.unlinkSync(localResumeFilePath); //Remove the locally saved temporary file as the upload operation is failed
         return null;
     }
 }
+
+export default cloudinary;
