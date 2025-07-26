@@ -16,8 +16,26 @@ const schema = mongoose.Schema(
       required: true,
     },
     score: {
-      type: Number,
-      required: true,
+      degree_score: {
+        type: Number,
+        default: 0,
+      },
+      experience_score: {
+        type: Number,
+        default: 0,
+      },
+      project_score: {
+        type: Number,
+        default: 0,
+      },
+      result: {
+        type: Number,
+        default: 0,
+      },
+      skill_score: {
+        type: Number,
+        default: 0,
+      },
     },
   },
   { timestamps: true }
