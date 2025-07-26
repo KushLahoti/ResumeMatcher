@@ -3,6 +3,7 @@ import JDMatchResult from "../models/JDMatchResult.model.js";
 import JobDescription from "../models/JobDescription.model";
 import StudentResume from "../models/StudentResume.model";
 import JDMatchResult from "../models/JDMatchResult.model"
+import axios from 'axios'
 
 
 export const getAllHistory = async (req, res) => {
@@ -91,6 +92,7 @@ export const uploadAndMatchResumesToJD = async (req,res)=>{
       HRId,
       JDId:createdJD._id,
       reumeId:resume._id,
+      resumeUrl: resume.Resume,
       degree_score: degree_score[index] || 0,
       experience_score: experience_score[index] || 0,
       project_score: project_score[index] || 0,

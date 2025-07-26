@@ -4,6 +4,8 @@ import {
   getAllHistory,
   getHistoryById,
   deleteHistory,
+  uploadAndMatchResumesToJD
+
 } from "../controllers/student.controller.js";
 
 const router = express.Router();
@@ -11,3 +13,4 @@ const router = express.Router();
 router.get("/history", protectRoute, getAllHistory);
 router.get("/history/:id", protectRoute, getHistoryById);
 router.delete("history/:id", protectRoute, deleteHistory);
+router.post('/upload',  protectRoute, uploadAndMatchResumesToJD);
