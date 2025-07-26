@@ -1,8 +1,7 @@
 import express from "express";
 import JDMatchResult from "../models/JDMatchResult.model.js";
-import JobDescription from "../models/JobDescription.model";
-import StudentResume from "../models/StudentResume.model";
-import JDMatchResult from "../models/JDMatchResult.model"
+import JobDescription from "../models/JobDescription.model.js";
+import StudentResume from "../models/StudentResume.model.js";
 import axios from 'axios'
 
 
