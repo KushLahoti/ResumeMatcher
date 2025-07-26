@@ -1,51 +1,50 @@
-
+import express from "express";
+import JDMatchResult from "../models/JDMatchResult.model.js";
 import JobDescription from "../models/JobDescription.model";
 import StudentResume from "../models/StudentResume.model";
 import JDMatchResult from "../models/JDMatchResult.model"
 
-const dummyScore = (jdText,resumeUrl) =>{
-   return Math.floor(Math.random()*101); 
-}
 
-export const getAllHrMatchResults = async (req,res)=>{
-    try{
-       const HRId = req.user?._id
-  if(!HRId){
-     return res.status(401).json({success:false,message:'Please Login First!'});
+export const getAllHistory = async (req, res) => {
+  try {
+    const history = await JDMatchResult.find({ user: req.user._id })
+      .populate("MatchedResumes.resumeId")
+      .populate("JDId");
+    res.status(200).json(history);
+  } catch (error) {
+    console.error("error in hr getAllHistory:", error);
+    res.status(500).json({ message: "Server error" });
   }
-  const results = await JDMatchResult.find({HRId}).sort({createdAt : -1});
-  res.status(200).json({
-    success :true,message:'All Match Results fetched',data:results
-  });
-    }catch(error){
-      console.error("Error in getAllHrMatchResults", error);
-      res.status(500).json({
-        success:false,
-        message : "Interval sever error"
-      })
-    }
-}
+};
 
-export const getOneHrMatchResults = async (req,res)=>{
-    try{
-       const HRId = req.user?._id
-  if(!HRId){
-     return res.status(401).json({success:false,message:'Please Login First!'});
+export const getHistoryById = async (req, res) => {
+  try {
+    const history = await JDMatchResult.findById(req.params.id)
+      .populate("MatchedResumes.resumeId")
+      .populate("JDId");
+    if (!history) {
+      return res.status(404).json({ message: "History not found" });
+    }
+    res.status(200).json(history);
+  } catch (error) {
+    console.error("error in hr getHistoryById:", error);
+    res.status(500).json({ message: "Server error" });
   }
-       const {id} = req.params
-    if(!id){
-        return res.status(401).json({success:false,message:'No such entry found'})
+};
+
+export const deleteHistory = async (req, res) => {
+  try {
+    const history = await JDMatchResult.findByIdAndDelete(req.params.id);
+    if (!history) {
+      return res.status(404).json({ message: "History not found" });
     }
-    const result = await JDMatchResult.findById(id);
-    return res.status(201).json({success:false,message:'Successfully fetched',data:result})
-    }catch(error){
-       console.error("Error in getOneHrMatchResults", error);
-      res.status(500).json({
-        success:false,
-        message : "Interval sever error",
-      })
-    }
-}
+    res.status(200).json({ message: "History deleted successfully" });
+  } catch (error) {
+    console.error("error in hr deleteHistory:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 export const uploadAndMatchResumesToJD = async (req,res)=>{
   try{
