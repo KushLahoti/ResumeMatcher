@@ -1,6 +1,47 @@
+import StudentHistory from "../models/StudentHistory.model.js";
 import StudentResume from "../models/StudentResume.model.js";
 import { uploadResumeOnCloudinary } from "../utils/cloudinary.util.js";
 import axios from "axios";
+
+export const getAllHistory = async (req, res) => {
+    try {
+        const history = await StudentHistory.find({ user: req.user._id }).populate(
+            "resume"
+        );
+        res.status(200).json(history);
+    } catch (error) {
+        console.error("error in getAllHistory:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+export const getHistoryById = async (req, res) => {
+    try {
+        const history = await StudentHistory.findById(req.params.id).populate(
+            "resume"
+        );
+        if (!history) {
+            return res.status(404).json({ message: "History not found" });
+        }
+        res.status(200).json(history);
+    } catch (error) {
+        console.error("error in getHistoryById:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+export const deleteHistory = async (req, res) => {
+    try {
+        const history = await StudentHistory.findByIdAndDelete(req.params.id);
+        if (!history) {
+            return res.status(404).json({ message: "History not found" });
+        }
+        res.status(200).json({ message: "History deleted successfully" });
+    } catch (error) {
+        console.error("error in deleteHistory:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
 
 // Upload Resume and Job Description
 export const handleUploadResumeAndDescription = async (req, res) => {
@@ -59,61 +100,6 @@ export const handleUploadResumeAndDescription = async (req, res) => {
 
     } catch (error) {
         console.log("Error from handleUploadResumeAndDescription", error);
-        return res.status(500).json({ success: false, message: "Server error" });
-    }
-}
-
-//get all the student previous uploaded resumes and their corresponding scores for corresponding JD
-export const getStudentAllMatchResults = async (req, res) => {
-    try {
-        const studentId = req.user?._id;
-
-        if (!studentId) {
-            return res.status(401).json({ success: false, message: "Please Login First!" });
-        }
-
-        const results = await StudentHistory.find({ user: studentId }).sort({ createdAt: -1 });
-
-        return res.status(200).json({
-            success: true,
-            message: "Match Results Fetched Successfully",
-            data: results
-        });
-
-    } catch (error) {
-        console.error("Error in getStudentMatchResults:", error);
-        return res.status(500).json({ success: false, message: "Internal server error" });
-    }
-}
-
-//get a particular resume result for the corresponding job description
-export const getStudentSingleMatchResult = async (req, res) => {
-    try {
-        const studentId = req.user?._id;
-        const { id } = req.params;
-
-        if (!studentId) {
-            return res.status(401).json({ success: false, message: "Please Login First!" });
-        }
-
-        if (!id) {
-            return res.status(400).json({ success: false, message: "Invalid request" });
-        }
-
-        const result = await StudentHistory.findOne({ _id: id, user: studentId });
-
-        if (!result) {
-            return res.status(404).json({ success: false, message: "Result not found" });
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: "Result fetched successfully",
-            data: result,
-        });
-
-    } catch (error) {
-        console.error("Error in getSingleMatchResult:", error);
         return res.status(500).json({ success: false, message: "Server error" });
     }
 }
