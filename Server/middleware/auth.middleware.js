@@ -4,10 +4,11 @@ import RefreshToken from "../models/refreshToken.model.js";
 
 export const protectRoute = async (req, res, next) => {
     try {
+        console.log(req.cookies);
         const { accessToken, refreshToken } = req.cookies
         let user, token, decoded
         if (!accessToken && !refreshToken) {
-            return res.status(401).json({ success: false, messaage: "Unauthorized Access" })
+            return res.status(401).json({ success: false, messaage: "Unauthorized Access 1" })
         }
         if (refreshToken) {
             decoded = jwt.verify(refreshToken, process.env.JWT_SECRET_KEY);
@@ -21,7 +22,7 @@ export const protectRoute = async (req, res, next) => {
         if (!decoded || !user || !token || token.refreshToken !== refreshToken) {
             res.clearCookie("refreshToken")
             res.clearCookie("accessToken")
-            return res.status(401).json({ success: false, messaage: "Unauthorized Access" })
+            return res.status(401).json({ success: false, messaage: "Unauthorized Access 2" })
         }
         if (!accessToken) {
             const newAccessToken = jwt.sign({ userId: decoded.userId, role: decoded.role }, process.env.JWT_SECRET_KEY, { expiresIn: parseInt(process.env.MAX_AGE_ACCESS_TOKEN) })
