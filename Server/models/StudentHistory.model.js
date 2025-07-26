@@ -7,7 +7,7 @@ const schema = mongoose.Schema(
       ref: "User",
     },
     job_description: {
-      type: string,
+      type: String,
       required: true,
     },
     resume: {
