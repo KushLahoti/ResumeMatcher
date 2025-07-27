@@ -76,10 +76,13 @@ export const uploadAndMatchResumesToJD = async (req, res) => {
     const allStudentResumes = await StudentResume.find();
     const resumeUrls = allStudentResumes.map((r) => r.Resume);
 
-    const response = await axios.post("http://127.0.0.1:5000/get_score", {
-      job_description: jobDescription,
-      resume_url: resumeUrls,
-    });
+    const response = await axios.post(
+      `${process.env.PYTHON_SERVER_URL}/get_score`,
+      {
+        job_description: jobDescription,
+        resume_url: resumeUrls,
+      }
+    );
 
     const scores = response.data?.score;
 
