@@ -71,6 +71,7 @@ export const signUpUser = async (req, res) => {
     });
 
     return res.status(201).send({
+      user: user,
       success: true,
       message: "User created successfully",
     });
@@ -110,6 +111,7 @@ export const login = async (req, res) => {
     });
 
     return res.status(201).send({
+      user: user,
       success: true,
       message: "Login Succesful",
     });
