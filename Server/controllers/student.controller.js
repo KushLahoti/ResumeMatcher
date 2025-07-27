@@ -2,6 +2,8 @@ import StudentHistory from "../models/StudentHistory.model.js";
 import StudentResume from "../models/StudentResume.model.js";
 import { uploadResumeOnCloudinary } from "../utils/cloudinary.util.js";
 import axios from "axios";
+import { getAIResumeSuggestions } from "../utils/geminiApi.util.js";
+import Suggestions from "../models/Suggestions.Model.js";
 
 export const getAllHistory = async (req, res) => {
     try {
@@ -67,7 +69,7 @@ export const handleUploadResumeAndDescription = async (req, res) => {
         const resumeUrl = fileOnCloudinary.secure_url;
 
         //Call the AI model API
-        const aiResponse = await axios.post("http://127.0.0.1:5000/get_score", {
+        const aiResponse = await axios.post("https://resumematcherpy.onrender.com/get_score", {
             resume_url: [resumeUrl],
             job_description: JobDescription
         })
@@ -85,21 +87,33 @@ export const handleUploadResumeAndDescription = async (req, res) => {
             result: aiResponse.data.score.result[0],
         };
 
-        await StudentHistory.create({
-            user: studentId,
-            job_description: JobDescription,
-            resume: savedResume._id,
-            score
-        })
+     const createdHistory = await StudentHistory.create({
+      user: studentId,
+      job_description: JobDescription,
+      resume: savedResume._id,
+      score
+    });
+        const suggestionsArray = await getAIResumeSuggestions(resumeUrl,JobDescription);
 
+    if(!suggestionsArray){
+       return res.status(500).json({success:false,message:"Failed in generating suggestions"});
+    }
+        await Suggestions.create({
+           history_id : createdHistory._id,
+           suggestions : suggestionsArray
+        })
+   
         return res.status(201).json({
             success: true,
-            message: "Resume and Job Description uploaded",
-            data: score,
+            message: "Resume and Job Description uploaded and suggestions given",
+            data:{
+              score,
+              suggestions : suggestionsArray
+            }
         });
 
     } catch (error) {
         console.log("Error from handleUploadResumeAndDescription", error);
-        return res.status(500).json({ success: false, message: "Server error" });
+        return res.status(500).json({ success: false, message: error.message });
     }
 }
