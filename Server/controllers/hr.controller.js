@@ -19,8 +19,13 @@ export const getAllHistory = async (req, res) => {
 export const getHistoryById = async (req, res) => {
   try {
     const history = await JDMatchResult.findById(req.params.id)
-      .populate("MatchedResumes.resumeId")
-      .populate("JDId");
+      .populate("JDId").populate({
+    path: "MatchedResumes.resumeId",
+    populate: {
+      path: "StudentId",
+      model: "User", // Make sure this matches your User model
+    },
+  });
     if (!history) {
       return res.status(404).json({ message: "History not found" });
     }
@@ -116,12 +121,16 @@ export const uploadAndMatchResumesToJD = async (req, res) => {
     });
 
     await matchResult.save();
-    const finalResult = await JDMatchResult.findById(matchResult._id).populate({
-      path: "MatchedResumes.resumeId",
-      populate: {
-        path: 'StudentId'
-      }
-    }).populate("JDId")
+   const finalResult = await JDMatchResult.findById(matchResult._id)
+  .populate("JDId")
+  .populate({
+    path: "MatchedResumes.resumeId",
+    populate: {
+      path: "StudentId",
+      model: "User", // Make sure this matches your User model
+    },
+  });
+
 
     res.json({
       success: true,
