@@ -91,7 +91,7 @@ export const login = async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      res.status(401).send({ success: false, message: "Invalid email" });
+      return res.status(401).send({ success: false, message: "Invalid email" });
     }
     const refToken = await RefreshToken.find({ userId: user._id });
     if (refToken.length > 0) {
@@ -99,7 +99,9 @@ export const login = async (req, res) => {
     }
     const isPasswordMatching = await bcrypt.compare(password, user.password);
     if (!isPasswordMatching) {
-      res.status(401).send({ success: false, message: "Invalid password" });
+      return res
+        .status(401)
+        .send({ success: false, message: "Invalid password" });
     }
 
     const { accessToken, refreshToken } = createToken(user);
@@ -117,7 +119,7 @@ export const login = async (req, res) => {
     });
   } catch (error) {
     console.error("Error from LoginController", error);
-    res.status(500).send({ success: false, message: error.message });
+    return res.status(500).send({ success: false, message: error.message });
   }
 };
 

@@ -4,6 +4,7 @@ import { uploadResumeOnCloudinary } from "../utils/cloudinary.util.js";
 import axios from "axios";
 import { getAIResumeSuggestions } from "../utils/geminiApi.util.js";
 import Suggestions from "../models/Suggestions.Model.js";
+import mongoose from "mongoose";
 
 export const getAllHistory = async (req, res) => {
   try {
@@ -18,6 +19,10 @@ export const getAllHistory = async (req, res) => {
 };
 
 export const getHistoryById = async (req, res) => {
+  const id = req.params.id;
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid or missing ID" });
+  }
   try {
     const history = await StudentHistory.findById(req.params.id).populate(
       "resume"
@@ -33,6 +38,10 @@ export const getHistoryById = async (req, res) => {
 };
 
 export const deleteHistory = async (req, res) => {
+  const id = req.params.id;
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid or missing ID" });
+  }
   try {
     const history = await StudentHistory.findByIdAndDelete(req.params.id);
     if (!history) {
@@ -72,11 +81,7 @@ export const handleUploadResumeAndDescription = async (req, res) => {
         .json({ success: false, message: "Failed to upload on cloudinary" });
     }
 
-
-    
-
     const resumeUrl = fileOnCloudinary.secure_url;
-
 
     //Call the AI model API
     const aiResponse = await axios.post(
@@ -100,34 +105,38 @@ export const handleUploadResumeAndDescription = async (req, res) => {
       Resume: fileOnCloudinary.secure_url,
     });
 
-     const createdHistory = await StudentHistory.create({
+    const createdHistory = await StudentHistory.create({
       user: studentId,
       job_description: JobDescription,
       resume: savedResume._id,
-      score
+      score,
     });
-        const suggestionsArray = await getAIResumeSuggestions(resumeUrl,JobDescription);
+    const suggestionsArray = await getAIResumeSuggestions(
+      resumeUrl,
+      JobDescription
+    );
 
-    if(!suggestionsArray){
-       return res.status(500).json({success:false,message:"Failed in generating suggestions"});
+    if (!suggestionsArray) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed in generating suggestions" });
     }
-        await Suggestions.create({
-           history_id : createdHistory._id,
-           suggestions : suggestionsArray
-        })
-   
-        return res.status(201).json({
-            success: true,
-            message: "Resume and Job Description uploaded and suggestions given",
-            data:{
-              score,
-              suggestions : suggestionsArray
-            }
-        });
+    await Suggestions.create({
+      history_id: createdHistory._id,
+      suggestions: suggestionsArray,
+    });
 
-    } catch (error) {
-        console.log("Error from handleUploadResumeAndDescription", error);
-        return res.status(500).json({ success: false, message: error.message });
-    }
-}
-
+    return res.status(201).json({
+      success: true,
+      message: "Resume and Job Description uploaded and suggestions given",
+      data: {
+        score,
+        suggestions: suggestionsArray,
+        history_id: createdHistory._id,
+      },
+    });
+  } catch (error) {
+    console.log("Error from handleUploadResumeAndDescription", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
