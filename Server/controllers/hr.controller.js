@@ -116,9 +116,12 @@ export const uploadAndMatchResumesToJD = async (req, res) => {
     });
 
     await matchResult.save();
-    const finalResult = await JDMatchResult.findById(matchResult._id).populate(
-      "MatchedResumes.resumeId"
-    );
+    const finalResult = await JDMatchResult.findById(matchResult._id).populate({
+      path: "MatchedResumes.resumeId",
+      populate: {
+        path: 'StudentId'
+      }
+    }).populate("JDId")
 
     res.json({
       success: true,
