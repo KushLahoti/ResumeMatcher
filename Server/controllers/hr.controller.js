@@ -20,12 +20,12 @@ export const getHistoryById = async (req, res) => {
   try {
     const history = await JDMatchResult.findById(req.params.id)
       .populate("JDId").populate({
-    path: "MatchedResumes.resumeId",
-    populate: {
-      path: "StudentId",
-      model: "User", // Make sure this matches your User model
-    },
-  });
+        path: "MatchedResumes.resumeId",
+        populate: {
+          path: "StudentId",
+          model: "User", // Make sure this matches your User model
+        },
+      });
     if (!history) {
       return res.status(404).json({ message: "History not found" });
     }
@@ -53,52 +53,52 @@ export const uploadAndMatchResumesToJD = async (req, res) => {
   try {
     const HRId = req.user?._id;
     if (!HRId) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Please Login first!" });
+      return res.status(401).json({ success: false, message: "Please Login first!" });
     }
-    // console.log(req.body);
+
     const jobDescription = req.body.description;
-
     if (!jobDescription) {
-      return res.status(404).json({
-        success: false,
-        message: "No Job Description Found",
-      });
+      return res.status(404).json({ success: false, message: "No Job Description Found" });
     }
-    const createdJD = await JobDescription.create({
-      HRId,
-      description: jobDescription,
-    });
 
+    const createdJD = await JobDescription.create({ HRId, description: jobDescription });
     if (!createdJD) {
-      return res.status(500).json({
-        success: false,
-        message: "Failed to create the JD in the database",
-      });
+      return res.status(500).json({ success: false, message: "Failed to create the JD in the database" });
     }
 
     const allStudentResumes = await StudentResume.find();
     const resumeUrls = allStudentResumes.map((r) => r.Resume);
+    const BATCH_SIZE = 5;
 
-    const response = await axios.post(
-      `${process.env.PYTHON_SERVER_URL}/get_score`,
-      {
-        job_description: jobDescription,
-        resume_url: resumeUrls,
-      }
-    );
+    // Scores arrays
+    let degree_score = [];
+    let experience_score = [];
+    let project_score = [];
+    let skill_score = [];
+    let result = [];
 
-    const scores = response.data?.score;
+    // ⏳ Process in batches
+    for (let i = 0; i < resumeUrls.length; i += BATCH_SIZE) {
+      const batchUrls = resumeUrls.slice(i, i + BATCH_SIZE);
 
-    const {
-      degree_score = [],
-      experience_score = [],
-      project_score = [],
-      skill_score = [],
-      result = [],
-    } = scores;
+      const response = await axios.post(
+        `${process.env.PYTHON_SERVER_URL}/get_score`,
+        {
+          job_description: jobDescription,
+          resume_url: batchUrls,
+        }
+      );
 
+      const scores = response.data?.score || {};
+
+      degree_score.push(...(scores.degree_score || []));
+      experience_score.push(...(scores.experience_score || []));
+      project_score.push(...(scores.project_score || []));
+      skill_score.push(...(scores.skill_score || []));
+      result.push(...(scores.result || []));
+    }
+
+    // 🧠 Combine scores with resumes
     const tempMatches = allStudentResumes.map((resume, index) => ({
       resumeId: resume._id,
       score: {
@@ -110,6 +110,7 @@ export const uploadAndMatchResumesToJD = async (req, res) => {
       },
     }));
 
+    // 🔝 Sort and select top 5
     const topMatches = tempMatches
       .sort((a, b) => b.score.result - a.score.result)
       .slice(0, 5);
@@ -121,24 +122,25 @@ export const uploadAndMatchResumesToJD = async (req, res) => {
     });
 
     await matchResult.save();
-   const finalResult = await JDMatchResult.findById(matchResult._id)
-  .populate("JDId")
-  .populate({
-    path: "MatchedResumes.resumeId",
-    populate: {
-      path: "StudentId",
-      model: "User", // Make sure this matches your User model
-    },
-  });
+    const finalResult = await JDMatchResult.findById(matchResult._id)
+      .populate("JDId")
+      .populate({
+        path: "MatchedResumes.resumeId",
+        populate: {
+          path: "StudentId",
+          model: "User", // Make sure this matches your User model
+        },
+      });
 
 
     res.json({
       success: true,
-      message: "5 resumes Matched",
+      message: "5 resumes matched",
       data: finalResult,
     });
   } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
+    console.error("error in uploadAndMatchResumesToJD:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
+
