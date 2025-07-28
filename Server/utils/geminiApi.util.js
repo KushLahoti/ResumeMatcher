@@ -5,43 +5,70 @@ dotenv.config();
 const key = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(key);
 
-export const getAIResumeSuggestions = async(cloudinaryURL,jobDescription) =>{
-    try{
-       const model = genAI.getGenerativeModel({model:"gemini-1.5-flash"});
-     const prompt = `You are an expert career assistant.
+export const getAIResumeSuggestions = async (cloudinaryURL, jobDescription) => {
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const prompt = `
+You are a resume optimization assistant for a job-matching platform.
 
-Based on the following job description and the resume provided at the given URL, analyze their similarity in terms of skills, degree, project work, and experience. Identify gaps or mismatches, and then generate a list of clear, actionable bullet-point suggestions that would help improve the candidate’s chances of matching the job description.
+You are given:
+- A *resume URL* (PDF)
+- A *job description (JD)* as plain text
+- Four category scores (Skill, Degree, Experience, Project)
 
-Each suggestion should be concise, insightful, and aimed at improving the relevance of the resume to the job. Focus on enhancing areas like technical skills, academic qualifications, project relevance, and work experience.
+You must generate a *flat array of actionable resume improvement suggestions* that help increase the sentence similarity between the resume and JD in each category.
 
-Important:
-- Present only the list of suggestions.
-- Each suggestion should start with a dash.
-- Do not include any introduction or conclusion.
+🧠 Scoring Logic:
+The scores are derived by:
+- Extracting relevant sentences from resume and JD based on defining keywords
+- Calculating sentence similarity via sentence-transformers
+- Final Score = 0.5 * Skill Score + 0.1 * Degree Score + 0.2 * Experience Score + 0.2 * Project Score
 
-Job Description:
-${jobDescription}
+🎯 Your Goal:
+Maximize the similarity for each category by:
+- Suggesting new or rephrased resume sentences using JD-style keywords and phrasing
+- Ensuring suggestions match how job descriptions are worded for better transformer alignment
+- Covering all 4 categories and focusing on semantic similarity
 
-Resume Link:
-${cloudinaryURL}
+📤 Output Format:
+Return a single array of improvement suggestions. Each item should be a sentence that can be added or revised in the resume.
 
-Generate suggestions like:
-- Add specific technical skills from the JD such as 'React.js' or 'Azure Data Factory'.
-- Include the full academic degree title to match the job's required qualifications.
-- Highlight relevant project experience using keywords from the JD.`;
+Example output:
+[
+  "Add a sentence like: 'Proficient in the MERN stack: MongoDB, Express.js, React.js, and Node.js.'",
+  "Mention RESTful API development and SQL database experience under Skills.",
+  "Reword degree as: 'Bachelor of Technology (B.Tech) in Computer Science and Engineering with CGPA 9.06.'",
+  "Include: 'Integrated Stripe payment gateway into an e-commerce platform using Node.js backend.'"
+]
 
-const result = await model.generateContent(prompt);
+If the resume is not readable or the text cannot be extracted, return an empty array.
 
-const response = result.response;
+Inputs:
+Resume URL: ${cloudinaryURL}
+Job Description: ${jobDescription}
+`;
 
-const text = response.text();
+        const result = await model.generateContent(prompt);
 
-const suggestions = text.split('\n').map(line=>line.trim()).filter(line=>line.startsWith('-'));
-return suggestions;
+        const response = result.response;
+
+        let text = response.text();
+
+        text = text.replace(/```json|```/g, '').trim();
+
+        let suggestions = [];
+        try {
+            suggestions = JSON.parse(text);  // Now this should work safely
+        } catch (error) {
+            console.error("Failed to parse suggestions JSON:", error);
+            suggestions = [];
+        }
+
+        return suggestions;
     }
-    catch(error){
-       console.error('Error in generating AI suggestions:', error);
-       return []; 
+    catch (error) {
+        console.error('Error in generating AI suggestions:', error);
+        return [];
     }
 
 }
