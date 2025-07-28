@@ -4,6 +4,7 @@ import { uploadResumeOnCloudinary } from "../utils/cloudinary.util.js";
 import axios from "axios";
 import { getAIResumeSuggestions } from "../utils/geminiApi.util.js";
 import Suggestions from "../models/Suggestions.Model.js";
+import mongoose from "mongoose";
 
 export const getAllHistory = async (req, res) => {
   try {
@@ -18,6 +19,10 @@ export const getAllHistory = async (req, res) => {
 };
 
 export const getHistoryById = async (req, res) => {
+  const id = req.params.id;
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid or missing ID" });
+  }
   try {
     const history = await StudentHistory.findById(req.params.id).populate(
       "resume"
@@ -33,6 +38,10 @@ export const getHistoryById = async (req, res) => {
 };
 
 export const deleteHistory = async (req, res) => {
+  const id = req.params.id;
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid or missing ID" });
+  }
   try {
     const history = await StudentHistory.findByIdAndDelete(req.params.id);
     if (!history) {

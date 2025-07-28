@@ -6,6 +6,7 @@ import userRouter from "./routes/user.routes.js";
 import studentRouter from "./routes/student.route.js";
 import cookieParser from "cookie-parser";
 import hrRouter from "./routes/hr.route.js";
+import suggestionRouter from "./routes/suggestion.route.js";
 
 const app = express();
 const PORT = process.env.PORT;
@@ -28,6 +29,7 @@ app.get("/", (req, res) => {
 app.use("/api/user", userRouter);
 app.use("/api/student", studentRouter);
 app.use("/api/hr", hrRouter);
+app.use("/api/suggestion", suggestionRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
