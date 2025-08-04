@@ -58,7 +58,7 @@ export const deleteHistory = async (req, res) => {
 export const handleUploadResumeAndDescription = async (req, res) => {
   try {
     const studentId = req.user?._id;
-    const localResumePath = req.file?.path;
+    const resumeBuffer = req.file?.buffer;
     const JobDescription = req.body.JobDescription;
 
     if (!studentId) {
@@ -67,23 +67,24 @@ export const handleUploadResumeAndDescription = async (req, res) => {
         .json({ success: false, message: "You need to login first" });
     }
 
-    if (!localResumePath || !JobDescription) {
+    if (!resumeBuffer || !JobDescription) {
       return res
         .status(400)
         .json({ success: false, message: "Missing Required Fields" });
     }
 
-    const fileOnCloudinary = await uploadResumeOnCloudinary(localResumePath);
+    // Upload to Cloudinary directly from buffer
+    const fileOnCloudinary = await uploadResumeOnCloudinary(resumeBuffer);
 
     if (!fileOnCloudinary) {
       return res
         .status(500)
-        .json({ success: false, message: "Failed to upload on cloudinary" });
+        .json({ success: false, message: "Failed to upload on Cloudinary" });
     }
 
     const resumeUrl = fileOnCloudinary.secure_url;
 
-    //Call the AI model API
+    // Call AI scoring API
     const aiResponse = await axios.post(
       `${process.env.PYTHON_SERVER_URL}/get_score`,
       {
@@ -102,7 +103,7 @@ export const handleUploadResumeAndDescription = async (req, res) => {
 
     const savedResume = await StudentResume.create({
       StudentId: studentId,
-      Resume: fileOnCloudinary.secure_url,
+      Resume: resumeUrl,
     });
 
     const createdHistory = await StudentHistory.create({
@@ -111,6 +112,7 @@ export const handleUploadResumeAndDescription = async (req, res) => {
       resume: savedResume._id,
       score,
     });
+
     const suggestionsArray = await getAIResumeSuggestions(
       resumeUrl,
       JobDescription
@@ -121,6 +123,7 @@ export const handleUploadResumeAndDescription = async (req, res) => {
         .status(500)
         .json({ success: false, message: "Failed in generating suggestions" });
     }
+
     await Suggestions.create({
       history_id: createdHistory._id,
       suggestions: suggestionsArray,
@@ -136,7 +139,7 @@ export const handleUploadResumeAndDescription = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log("Error from handleUploadResumeAndDescription", error);
+    console.error("Error from handleUploadResumeAndDescription", error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
