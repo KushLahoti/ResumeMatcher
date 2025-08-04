@@ -1,50 +1,36 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+import "dotenv/config";
+import connectDB from "./configs/db.configs.js";
+import userRouter from "./routes/user.routes.js";
+import studentRouter from "./routes/student.route.js";
 import cookieParser from "cookie-parser";
-
-// Import routes
-import studentRoutes from "./routes/student.route.js";
-import hrRoutes from "./routes/hr.route.js";
-import suggestionRoutes from "./routes/suggestion.route.js";
-import userRoutes from "./routes/user.routes.js";
-
-// Load env variables
-dotenv.config();
+import hrRouter from "./routes/hr.route.js";
+import suggestionRouter from "./routes/suggestion.route.js";
 
 const app = express();
+const PORT = process.env.PORT;
 
-// ✅ CORS setup — ALLOW frontend to access backend
-const allowedOrigins = [
-  "https://resume-matcher-fe.vercel.app",
-  "http://localhost:3000"
-];
+await connectDB();
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error("Not allowed by CORS"));
-  },
-  credentials: true
-}));
-
-app.options("*", cors()); // For preflight support
-
-// Middleware
 app.use(express.json());
 app.use(cookieParser());
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL,
+    credentials: true,
+  })
+);
 
-// Routes
-app.use("/student", studentRoutes);
-app.use("/hr", hrRoutes);
-app.use("/suggestion", suggestionRoutes);
-app.use("/user", userRoutes);
-
-// Health check (optional)
 app.get("/", (req, res) => {
-  res.send("Backend is working!");
+  res.send("Server is Live");
 });
 
-export default app;
+app.use("/api/user", userRouter);
+app.use("/api/student", studentRouter);
+app.use("/api/hr", hrRouter);
+app.use("/api/suggestion", suggestionRouter);
+
+app.listen(PORT, () => {
+  console.log(`Server is listening on port ${PORT}`);
+});
